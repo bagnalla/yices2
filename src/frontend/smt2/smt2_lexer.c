@@ -210,6 +210,7 @@ static const char * const smt2_symbol_string[NUM_SMT2_SYMBOLS] = {
   "bvsle",                   // SMT2_SYM_BVSLE
   "bvsgt",                   // SMT2_SYM_BVSGT
   "bvsge",                   // SMT2_SYM_BVSGE
+  "bv2nat",                  // SMT2_SYM_BV2NAT
   "FiniteField",             // SMT2_SYM_FINITEFIELD
   "ff.add",                  // SMT2_SYM_FFADD
   "ff.mul",                  // SMT2_SYM_FFMUL
@@ -398,6 +399,7 @@ static void smt2_activate_bv(void) {
   active_symbol[SMT2_SYM_BVSLE] = true;
   active_symbol[SMT2_SYM_BVSGT] = true;
   active_symbol[SMT2_SYM_BVSGE] = true;
+  active_symbol[SMT2_SYM_BV2NAT] = true;
 }
 
 static void smt2_activate_ff(void) {
@@ -1256,4 +1258,3 @@ bool symbol_needs_quotes(const char *s) {
 
   return false;
 }
-

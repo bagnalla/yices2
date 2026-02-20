@@ -255,6 +255,7 @@ enum smt2_symbol {
   SMT2_SYM_BVSLE,
   SMT2_SYM_BVSGT,
   SMT2_SYM_BVSGE,
+  SMT2_SYM_BV2NAT,
 
   // Special symbols used in the FF theory: (as ff<numeral> (_ FiniteField <numeral>))
   SMT2_SYM_FF_CONSTANT,

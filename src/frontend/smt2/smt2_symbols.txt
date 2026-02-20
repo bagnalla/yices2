@@ -75,6 +75,7 @@ bvslt,                        SMT2_SYM_BVSLT
 bvsle,                        SMT2_SYM_BVSLE
 bvsgt,                        SMT2_SYM_BVSGT
 bvsge,                        SMT2_SYM_BVSGE
+bv2nat,                       SMT2_SYM_BV2NAT
 FiniteField,                  SMT2_SYM_FINITEFIELD
 ff.add,                       SMT2_SYM_FFADD
 ff.mul,                       SMT2_SYM_FFMUL

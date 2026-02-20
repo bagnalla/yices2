@@ -1401,6 +1401,7 @@ static const char * const opcode_string[NUM_SMT2_OPCODES] = {
   "to_int",               // SMT2_MK_TO_INT
   "is_int",               // SMT2_MK_IS_INT
   "divisible",            // SMT2_MK_DIVISIBLE
+  "bv2nat",               // SMT2_MK_BV2NAT
 };
 
 

@@ -187,9 +187,10 @@ typedef enum smt2_opcodes {
   SMT2_MK_TO_INT,
   SMT2_MK_IS_INT,
   SMT2_MK_DIVISIBLE,
+  SMT2_MK_BV2NAT,
 } smt2_opcodes_t;
 
-#define NUM_SMT2_OPCODES (SMT2_MK_DIVISIBLE+1)
+#define NUM_SMT2_OPCODES (SMT2_MK_BV2NAT+1)
 
 
 

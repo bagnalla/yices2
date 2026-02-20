@@ -680,6 +680,71 @@ static void eval_smt2_to_int(tstack_t *stack, stack_elem_t *f, uint32_t n) {
 
 
 /*
+ * [bv2nat x]
+ * - x must be a bitvector term of n bits
+ * - this rewrites to sum_{i=0}^{n-1} (ite ((_ extract i i) x) = #b1 then 2^i else 0)
+ */
+static void check_smt2_bv2nat(tstack_t *stack, stack_elem_t *f, uint32_t n) {
+  check_op(stack, SMT2_MK_BV2NAT);
+  check_size(stack, n == 1);
+}
+
+static void eval_smt2_bv2nat(tstack_t *stack, stack_elem_t *f, uint32_t n) {
+  term_t bv, onebit, zero, one, *a;
+  term_t bit, cond, coeff, t;
+  mpz_t c;
+  uint32_t i, nbits;
+
+  bv = get_term(stack, f);
+  if (! yices_term_is_bitvector(bv)) {
+    // trigger a proper Yices type error message
+    t = yices_bvextract(bv, 0, 0);
+    check_term(stack, t);
+  }
+
+  nbits = yices_term_bitsize(bv);
+  onebit = yices_bvconst_one(1);
+  zero = yices_int32(0);
+  one = yices_int32(1);
+  check_term(stack, onebit);
+  check_term(stack, zero);
+  check_term(stack, one);
+
+  a = get_aux_buffer(stack, nbits);
+  mpz_init_set_ui(c, 1);
+
+  for (i=0; i<nbits; i++) {
+    bit = yices_bvextract(bv, i, i);
+    check_term(stack, bit);
+    cond = yices_eq(bit, onebit);
+    check_term(stack, cond);
+
+    if (i == 0) {
+      coeff = one;
+    } else {
+      mpz_mul_2exp(c, c, 1);
+      coeff = yices_mpz(c);
+      check_term(stack, coeff);
+    }
+
+    a[i] = yices_ite(cond, coeff, zero);
+    check_term(stack, a[i]);
+  }
+
+  mpz_clear(c);
+  if (nbits == 1) {
+    t = a[0];
+  } else {
+    t = yices_sum(nbits, a);
+    check_term(stack, t);
+  }
+
+  tstack_pop_frame(stack);
+  set_term_result(stack, t);
+}
+
+
+/*
  * [is_int x]
  */
 static void check_smt2_is_int(tstack_t *stack, stack_elem_t *f, uint32_t n) {
@@ -1748,6 +1813,7 @@ static const uint8_t smt2_key[NUM_SMT2_SYMBOLS] = {
   SMT2_KEY_TERM_OP,      // SMT2_SYM_BVSLE
   SMT2_KEY_TERM_OP,      // SMT2_SYM_BVSGT
   SMT2_KEY_TERM_OP,      // SMT2_SYM_BVSGE
+  SMT2_KEY_TERM_OP,      // SMT2_SYM_BV2NAT
   SMT2_KEY_IDX_FF,       // SMT2_SYM_FF_CONSTANT
   SMT2_KEY_IDX_TYPE,     // SMT2_SYM_FINITEFIELD
   SMT2_KEY_TERM_OP,      // SMT2_SYM_FFADD
@@ -1827,6 +1893,7 @@ static const int32_t smt2_val[NUM_SMT2_SYMBOLS] = {
   MK_BV_SLE,             // SMT2_SYM_BVSLE
   MK_BV_SGT,             // SMT2_SYM_BVSGT
   MK_BV_SGE,             // SMT2_SYM_BVSGE
+  SMT2_MK_BV2NAT,        // SMT2_SYM_BV2NAT
   MK_FF_CONST,           // SMT2_SYM_FF_CONSTANT
   MK_FF_TYPE,            // SMT2_SYM_FINITEFIELD
   MK_FF_ADD,             // SMT2_SYM_FFADD
@@ -2742,5 +2809,6 @@ void init_smt2_tstack(tstack_t *stack) {
   tstack_add_op(stack, SMT2_MK_TO_INT, false, eval_smt2_to_int, check_smt2_to_int);
   tstack_add_op(stack, SMT2_MK_IS_INT, false, eval_smt2_is_int, check_smt2_is_int);
   tstack_add_op(stack, SMT2_MK_DIVISIBLE, false, eval_smt2_divisible, check_smt2_divisible);
+  tstack_add_op(stack, SMT2_MK_BV2NAT, false, eval_smt2_bv2nat, check_smt2_bv2nat);
   tstack_add_op(stack, MK_DIVISION, false, eval_smt2_mk_division, check_smt2_mk_division);
 }
