@@ -690,39 +690,49 @@ static void check_smt2_bv2nat(tstack_t *stack, stack_elem_t *f, uint32_t n) {
 }
 
 static void eval_smt2_bv2nat(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  term_t bv, onebit, zero, one, *a;
-  term_t bit, cond, coeff, t;
+  term_t bv, zero, one, *a;
+  term_t cond, coeff, t;
   mpz_t c;
+  uint64_t pow2;
+  bool mpz_ready;
   uint32_t i, nbits;
 
   bv = get_term(stack, f);
   if (! yices_term_is_bitvector(bv)) {
     // trigger a proper Yices type error message
-    t = yices_bvextract(bv, 0, 0);
+    t = yices_bitextract(bv, 0);
     check_term(stack, t);
   }
 
   nbits = yices_term_bitsize(bv);
-  onebit = yices_bvconst_one(1);
+
   zero = yices_int32(0);
   one = yices_int32(1);
-  check_term(stack, onebit);
   check_term(stack, zero);
   check_term(stack, one);
 
   a = get_aux_buffer(stack, nbits);
-  mpz_init_set_ui(c, 1);
+  pow2 = 1;
+  mpz_ready = false;
 
   for (i=0; i<nbits; i++) {
-    bit = yices_bvextract(bv, i, i);
-    check_term(stack, bit);
-    cond = yices_eq(bit, onebit);
+    cond = yices_bitextract(bv, i);
     check_term(stack, cond);
 
     if (i == 0) {
       coeff = one;
+    } else if (i < 63) {
+      pow2 <<= 1;
+      coeff = yices_int64((int64_t) pow2);
+      check_term(stack, coeff);
     } else {
-      mpz_mul_2exp(c, c, 1);
+      if (! mpz_ready) {
+        mpz_init_set_ui(c, 1);
+        mpz_mul_2exp(c, c, 63);
+        mpz_ready = true;
+      } else {
+        mpz_mul_2exp(c, c, 1);
+      }
       coeff = yices_mpz(c);
       check_term(stack, coeff);
     }
@@ -731,7 +741,9 @@ static void eval_smt2_bv2nat(tstack_t *stack, stack_elem_t *f, uint32_t n) {
     check_term(stack, a[i]);
   }
 
-  mpz_clear(c);
+  if (mpz_ready) {
+    mpz_clear(c);
+  }
   if (nbits == 1) {
     t = a[0];
   } else {
